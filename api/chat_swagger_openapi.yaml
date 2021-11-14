@@ -90,7 +90,7 @@ components:
         password:
           type: string
           description: The password for login in clear text
-    LoginUserResonse:
+    LoginUserResponse:
       required:
       - url
       type: object

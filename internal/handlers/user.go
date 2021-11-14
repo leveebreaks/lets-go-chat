@@ -8,22 +8,22 @@ import (
 )
 
 type createUserRequest struct {
-	userName string `json:"userName"`
-	password string `json:"password"`
+	UserName string `json:"userName"`
+	Password string `json:"password"`
 }
 
 type createUserResponse struct {
-	id       string `json:"id"`
-	userName string `json:"userName"`
+	Id       string `json:"id"`
+	UserName string `json:"userName"`
 }
 
 type loginUserRequest struct {
-	userName string `json:"userName"`
-	password string `json:"password"`
+	UserName string `json:"userName"`
+	Password string `json:"password"`
 }
 
 type loginUserResponse struct {
-	url string `json:"url"`
+	Url string `json:"url"`
 }
 
 // CreateUser /user
@@ -43,24 +43,48 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Request:", req.userName, req.password)
-
 	// validate name and pass first
 	// ...
 
-	id, err := service.CreateUser(req.userName, req.password)
+	id, err := service.CreateUser(req.UserName, req.Password)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&createUserResponse{id, req.userName})
+	json.NewEncoder(w).Encode(createUserResponse{id, req.UserName})
 }
 
 // LoginUser /user/login
-func LoginUser(w http.ResponseWriter, h *http.Request) {
+func LoginUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
+	var req loginUserRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	token, ok := service.LoginUser(req.UserName, req.Password)
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "Invalid username/password", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	resp := loginUserResponse{Url: "url/chat?token=" + token}
+	json.NewEncoder(w).Encode(resp)
 }

@@ -16,7 +16,7 @@ var users = make(map[string]user)
 
 func CreateUser(userName string, password string) (string, error) {
 	_, ok := users[userName]
-	if ok == false {
+	if ok {
 		return "", errors.New("user with such name already exists")
 	}
 
@@ -34,15 +34,9 @@ func CreateUser(userName string, password string) (string, error) {
 
 func CheckUser(userName string, password string) bool {
 	u, ok := users[userName]
-	if ok == false {
+	if !ok {
 		return false
 	}
 
-	hashedPassword, err := hasher.HashPassword(password)
-
-	if err == nil {
-		return hasher.CheckPasswordHash(hashedPassword, u.passwordHash)
-	}
-
-	return false
+	return hasher.CheckPasswordHash(password, u.passwordHash)
 }
