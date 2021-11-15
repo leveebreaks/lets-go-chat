@@ -27,7 +27,7 @@ type loginUserResponse struct {
 	Url string `json:"url"`
 }
 
-var authService = &service.AuthService{AuthRepository: repository.NewInMemoryAuthRepo()}
+var authService = &service.AuthService{AuthRepository: repository.NewMongoDbAuthRepo("mongodb://localhost:27017")}
 
 // CreateUser /user
 func CreateUser(w http.ResponseWriter, r *http.Request) {

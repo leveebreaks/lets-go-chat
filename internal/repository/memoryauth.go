@@ -21,7 +21,7 @@ func NewInMemoryAuthRepo() *inMemoryAuthRepo {
 	return &inMemoryAuthRepo{users}
 }
 
-func (repo *inMemoryAuthRepo) CreateUser(userName string, password string) (string, error) {
+func (repo *inMemoryAuthRepo) CreateUser(userName, password string) (string, error) {
 	_, ok := repo.users[userName]
 	if ok {
 		return "", errors.New("user with such name already exists")
@@ -39,7 +39,7 @@ func (repo *inMemoryAuthRepo) CreateUser(userName string, password string) (stri
 	return id, nil
 }
 
-func (repo *inMemoryAuthRepo) CheckUser(userName string, password string) bool {
+func (repo *inMemoryAuthRepo) CheckUser(userName, password string) bool {
 	u, ok := repo.users[userName]
 	if !ok {
 		return false
