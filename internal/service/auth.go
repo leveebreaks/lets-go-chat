@@ -5,15 +5,19 @@ import (
 	"github.com/leveebreaks/lets-go-chat/internal/repository"
 )
 
+type AuthService struct {
+	repository.AuthRepository
+}
+
 // CreateUser ...
-func CreateUser(userName string, password string) (string, error) {
-	id, err := repository.CreateUser(userName, password)
+func (service *AuthService) CreateUser(userName string, password string) (string, error) {
+	id, err := service.AuthRepository.CreateUser(userName, password)
 	return id, err
 }
 
 // LoginUser error equal
-func LoginUser(userName string, password string) (string, bool) {
-	ok := repository.CheckUser(userName, password)
+func (service *AuthService) LoginUser(userName string, password string) (string, bool) {
+	ok := service.CheckUser(userName, password)
 	var token string
 	if ok {
 		token = uuid.NewString()

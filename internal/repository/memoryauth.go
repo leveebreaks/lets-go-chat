@@ -6,16 +6,23 @@ import (
 	"github.com/leveebreaks/hasher"
 )
 
+type inMemoryAuthRepo struct {
+	users map[string]user
+}
+
 type user struct {
 	userName     string
 	passwordHash string
 	id           string
 }
 
-var users = make(map[string]user)
+func NewInMemoryAuthRepo() *inMemoryAuthRepo {
+	users := make(map[string]user)
+	return &inMemoryAuthRepo{users}
+}
 
-func CreateUser(userName string, password string) (string, error) {
-	_, ok := users[userName]
+func (repo *inMemoryAuthRepo) CreateUser(userName string, password string) (string, error) {
+	_, ok := repo.users[userName]
 	if ok {
 		return "", errors.New("user with such name already exists")
 	}
@@ -27,13 +34,13 @@ func CreateUser(userName string, password string) (string, error) {
 
 	id := uuid.NewString()
 
-	users[userName] = user{userName, passwordHash, id}
+	repo.users[userName] = user{userName, passwordHash, id}
 
 	return id, nil
 }
 
-func CheckUser(userName string, password string) bool {
-	u, ok := users[userName]
+func (repo *inMemoryAuthRepo) CheckUser(userName string, password string) bool {
+	u, ok := repo.users[userName]
 	if !ok {
 		return false
 	}
