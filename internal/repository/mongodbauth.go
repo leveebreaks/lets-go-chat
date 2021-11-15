@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/leveebreaks/hasher"
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,13 +29,19 @@ func (repo *mongoDbAuthRepo) CreateUser(userName, password string) (string, erro
 	}
 
 	coll := client.Database("auth").Collection("users")
+	res := coll.FindOne(ctx, bson.D{{"userName", userName}})
+	if res.Err() == nil {
+		return "", errors.New("user with such name already exists")
+	}
+
 	hashedPass, err := hasher.HashPassword(password)
 	if err != nil {
 		return "", err
 	}
+
 	uid := uuid.NewString()
 	_, err = coll.InsertOne(ctx, bson.D{{"userName", userName}, {"password", hashedPass}, {"uid", uid}})
-	if err != nil {
+	if err == nil {
 		return "", err
 	}
 
