@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/leveebreaks/hasher"
 )
@@ -16,12 +17,13 @@ type user struct {
 	id           string
 }
 
-func NewInMemoryAuthRepo() *inMemoryAuthRepo {
+func NewInMemoryAuthRepo() AuthRepository {
 	users := make(map[string]user)
 	return &inMemoryAuthRepo{users}
 }
 
 func (repo *inMemoryAuthRepo) CreateUser(userName, password string) (string, error) {
+	fmt.Println("INMEMO AUTH REPO")
 	_, ok := repo.users[userName]
 	if ok {
 		return "", errors.New("user with such name already exists")

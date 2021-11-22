@@ -2,14 +2,17 @@ package server
 
 import (
 	"fmt"
+	"github.com/leveebreaks/lets-go-chat/config"
 	"github.com/leveebreaks/lets-go-chat/internal/handlers"
 	"net/http"
 )
 
-func Start() {
+func Start(s config.Settings) {
 	registerEndpoints()
-	fmt.Println("Start listening on localhost:8182")
-	http.ListenAndServe(":8182", nil)
+
+	addr := fmt.Sprintf("%s:%s", s.ApiHost, s.ApiPort)
+	fmt.Printf("Start listening on %s", addr)
+	http.ListenAndServe(addr, nil)
 }
 
 func registerEndpoints() {

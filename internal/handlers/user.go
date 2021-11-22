@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/leveebreaks/lets-go-chat/internal/repository"
 	"github.com/leveebreaks/lets-go-chat/internal/service"
 	"net/http"
 )
@@ -27,8 +26,6 @@ type loginUserResponse struct {
 	Url string `json:"url"`
 }
 
-var authService = &service.AuthService{AuthRepository: repository.NewMongoDbAuthRepo("mongodb://localhost:27017")}
-
 // CreateUser /user
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -49,7 +46,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	// validate name and pass first
 	// ...
 
-	id, err := authService.CreateUser(req.UserName, req.Password)
+	id, err := service.CreateUser(req.UserName, req.Password)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -79,7 +76,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, ok := authService.LoginUser(req.UserName, req.Password)
+	token, ok := service.LoginUser(req.UserName, req.Password)
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		http.Error(w, "Invalid username/password", http.StatusNotFound)
