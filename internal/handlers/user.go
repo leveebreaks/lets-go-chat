@@ -28,12 +28,6 @@ type loginUserResponse struct {
 
 // CreateUser /user
 func CreateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var req createUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -61,12 +55,6 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // LoginUser /user/login
 func LoginUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var req loginUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
