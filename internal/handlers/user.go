@@ -26,8 +26,16 @@ type loginUserResponse struct {
 	Url string `json:"url"`
 }
 
+type user struct {
+	authService service.Auth
+}
+
+func NewUser(as service.Auth) user {
+	return user{as}
+}
+
 // CreateUser /user
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func (u *user) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req createUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -37,10 +45,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// validate name and pass first
-	// ...
-
-	id, err := service.CreateUser(req.UserName, req.Password)
+	id, err := u.authService.CreateUser(req.UserName, req.Password)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -54,7 +59,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoginUser /user/login
-func LoginUser(w http.ResponseWriter, r *http.Request) {
+func (u *user) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var req loginUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -64,7 +69,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, ok := service.LoginUser(req.UserName, req.Password)
+	token, ok := u.authService.LoginUser(req.UserName, req.Password)
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		http.Error(w, "Invalid username/password", http.StatusNotFound)

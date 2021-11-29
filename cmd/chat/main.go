@@ -1,17 +1,46 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/leveebreaks/lets-go-chat/config"
+	"github.com/leveebreaks/lets-go-chat/internal/handlers"
 	"github.com/leveebreaks/lets-go-chat/internal/repository"
-	"github.com/leveebreaks/lets-go-chat/internal/server"
+	"github.com/leveebreaks/lets-go-chat/internal/service"
+	"github.com/urfave/negroni"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
+	"net/http"
 )
 
 func main() {
-	fmt.Println("here we go")
 	settings := config.GetSettings()
 
-	repository.InitAuthRepository(repository.NewMongoDbAuthRepo(settings.MongoDbUrl))
+	ctx := context.TODO()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(settings.MongoDbUrl))
+	defer client.Disconnect(ctx)
+	if err != nil {
+		panic(err)
+	}
+	db := client.Database("auth")
 
-	server.Start(settings)
+	authService := service.NewAuth(repository.NewMongoDbAuthRepo(db))
+	hUser := handlers.NewUser(authService)
+
+	n := negroni.New()
+	n.Use(negroni.NewRecovery())
+	rLog := negroni.NewLogger()
+	rLog.SetFormat("[{{.Status}} {{.Duration}} {{.Method}}  {{.Path}}] - {{.Request.UserAgent}}")
+	n.Use(rLog)
+
+	r := mux.NewRouter()
+	r.HandleFunc("/v1/user", hUser.CreateUser).Methods(http.MethodPost)
+	r.HandleFunc("/v1/user/login", hUser.LoginUser).Methods(http.MethodPost)
+	n.UseHandler(r)
+
+	addr := fmt.Sprintf("%s:%s", settings.ApiHost, settings.ApiPort)
+	fmt.Printf("Start listening on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, n))
 }
