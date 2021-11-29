@@ -8,6 +8,7 @@ import (
 	"github.com/leveebreaks/lets-go-chat/internal/handlers"
 	"github.com/leveebreaks/lets-go-chat/internal/repository"
 	"github.com/leveebreaks/lets-go-chat/internal/service"
+	"github.com/leveebreaks/lets-go-chat/pkg/middlewares"
 	"github.com/urfave/negroni"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -31,11 +32,9 @@ func main() {
 
 	n := negroni.New()
 	n.Use(negroni.NewRecovery())
-	rLog := negroni.NewLogger()
-	rLog.SetFormat("[{{.Status}} {{.Duration}} {{.Method}}  {{.Path}}] - {{.Request.UserAgent}}")
-	n.Use(rLog)
 
 	r := mux.NewRouter()
+	r.Use(middlewares.LogEndPointCalls)
 	r.HandleFunc("/v1/user", hUser.CreateUser).Methods(http.MethodPost)
 	r.HandleFunc("/v1/user/login", hUser.LoginUser).Methods(http.MethodPost)
 	n.UseHandler(r)
