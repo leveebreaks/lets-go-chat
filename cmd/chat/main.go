@@ -19,7 +19,8 @@ import (
 func main() {
 	settings := config.GetSettings()
 
-	ctx := context.TODO()
+	//mongodb
+	ctx := context.Background()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(settings.MongoDbUrl))
 	defer client.Disconnect(ctx)
 	if err != nil {
@@ -27,17 +28,23 @@ func main() {
 	}
 	db := client.Database("auth")
 
+	//
 	authService := service.NewAuth(repository.NewMongoDbAuthRepo(db))
 	hUser := handlers.NewUser(authService)
 
+	//middlewares
 	n := negroni.New()
 	n.Use(negroni.NewRecovery())
 
+	//routing
 	r := mux.NewRouter()
 	r.Use(middlewares.LogEndPointCalls)
 	r.HandleFunc("/v1/user", hUser.CreateUser).Methods(http.MethodPost)
 	r.HandleFunc("/v1/user/login", hUser.LoginUser).Methods(http.MethodPost)
+	r.HandleFunc("/ws/echo", handlers.Echo)
 	n.UseHandler(r)
+
+	//websockets
 
 	addr := fmt.Sprintf("%s:%s", settings.ApiHost, settings.ApiPort)
 	fmt.Printf("Start listening on %s", addr)

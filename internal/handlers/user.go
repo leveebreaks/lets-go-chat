@@ -75,9 +75,10 @@ func (u *user) LoginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid username/password", http.StatusNotFound)
 		return
 	}
+	service.AddToken(token, req.UserName)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	resp := loginUserResponse{Url: "url/chat?token=" + token}
+	resp := loginUserResponse{Url: "/ws/echo?token=" + token}
 	json.NewEncoder(w).Encode(resp)
 }
