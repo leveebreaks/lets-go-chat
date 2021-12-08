@@ -3,40 +3,32 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/leveebreaks/hasher"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
 type mongoDbAuthRepo struct {
-	uri string
+	db *mongo.Database
 }
 
 // NewMongoDbAuthRepo ...
-func NewMongoDbAuthRepo(uri string) AuthRepository {
-	return &mongoDbAuthRepo{uri: uri}
+func NewMongoDbAuthRepo(db *mongo.Database) Auth {
+	return &mongoDbAuthRepo{db}
 }
 
 func (repo *mongoDbAuthRepo) CreateUser(userName, password string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(repo.uri))
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
 
-	coll := client.Database("auth").Collection("users")
+	coll := repo.db.Collection("users")
 	res := coll.FindOne(ctx, bson.D{{"userName", userName}})
 	if ctx.Err() != nil {
-		fmt.Println(ctx.Err())
-		return "", ctx.Err()
+		panic(ctx.Err())
 	}
-	if res.Err() != nil {
+	if res.Err() == mongo.ErrNoDocuments {
 		return "", errors.New("user with such name already exists")
 	}
 
@@ -47,7 +39,7 @@ func (repo *mongoDbAuthRepo) CreateUser(userName, password string) (string, erro
 
 	uid := uuid.NewString()
 	_, err = coll.InsertOne(ctx, bson.D{{"userName", userName}, {"password", hashedPass}, {"uid", uid}})
-	if err == nil {
+	if err != nil {
 		return "", err
 	}
 
@@ -55,13 +47,10 @@ func (repo *mongoDbAuthRepo) CreateUser(userName, password string) (string, erro
 }
 
 func (repo *mongoDbAuthRepo) CheckUser(userName, password string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(repo.uri))
-	if err != nil || ctx.Err() != nil {
-		return false
-	}
-	coll := client.Database("auth").Collection("users")
+
+	coll := repo.db.Collection("users")
 	hashedPass, err := hasher.HashPassword(password)
 	if err != nil {
 		return false
